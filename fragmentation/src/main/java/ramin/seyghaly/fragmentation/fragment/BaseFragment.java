@@ -1,4 +1,4 @@
-package ramin.seyghaly.fragmentation;
+package ramin.seyghaly.fragmentation.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -7,17 +7,35 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import java.util.Random;
+
+import ramin.seyghaly.fragmentation.activity.BaseActivity;
+
 public class BaseFragment extends Fragment implements FragmentDelegate {
 
     protected BaseActivity activity;
+    private boolean visible = false;
+    private final String tag = getClass().getName() + "-" + this.hashCode() + "-" + random();
+
+    private String random() {
+        Random generator = new Random();
+        StringBuilder randomStringBuilder = new StringBuilder();
+        char tempChar;
+        for (int i = 0; i < 4; i++) {
+            tempChar = (char) (generator.nextInt(96) + 32);
+            randomStringBuilder.append(tempChar);
+        }
+        return randomStringBuilder.toString();
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        visible = true;
         super.onCreate(savedInstanceState);
     }
 
     public String getUniqueTag() {
-        return getClass().getName() + "-" + this.hashCode();
+        return tag;
     }
 
     protected int getWindowWidth() {
@@ -52,6 +70,20 @@ public class BaseFragment extends Fragment implements FragmentDelegate {
     @Override
     public boolean onBackPressed() {
         return true;
+    }
+
+    @Override
+    public void visibleAgain() {
+        visible = true;
+    }
+
+    @Override
+    public void inVisible() {
+        visible = false;
+    }
+
+    public boolean isFragmentvisible() {
+        return visible;
     }
 
 }

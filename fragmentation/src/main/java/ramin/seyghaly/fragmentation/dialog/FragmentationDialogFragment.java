@@ -1,13 +1,13 @@
-package ramin.seyghaly.fragmentation.bottomsheet;
+package ramin.seyghaly.fragmentation.dialog;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +16,6 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.ColorInt;
-import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,16 +23,17 @@ import androidx.annotation.StyleRes;
 import androidx.fragment.app.DialogFragment;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import ramin.seyghaly.fragmentation.R;
+import ramin.seyghaly.fragmentation.bottomsheet.FragmentationButtomsheet;
+import ramin.seyghaly.fragmentation.bottomsheet.OnBottomsheetListener;
 import ramin.seyghaly.fragmentation.exceptions.FragmentationException;
 
-public abstract class FragmentationButtomsheet extends BottomSheetDialogFragment implements BottomsheetDelegate {
+
+public abstract class FragmentationDialogFragment extends DialogFragment implements DialogDelegate {
 
     private View rootView, view;
-    private BottomSheetBehavior behavior;
-    private OnBottomsheetListener onBottomsheetListener = null;
+    private OnDialogListener onDialogListener;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,14 +41,12 @@ public abstract class FragmentationButtomsheet extends BottomSheetDialogFragment
         setStyle(DialogFragment.STYLE_NO_TITLE, getStyle());
     }
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Log.i("sadsaf","3");
-        rootView = inflater.inflate(R.layout.bottomsheet_layout, container);
-        FrameLayout rootBottomsheet = rootView.findViewById(R.id.rootBottomsheet);
-        view = inflater.inflate(getBottomsheetLayout(), container);
-        rootBottomsheet.addView(view);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        rootView = inflater.inflate(R.layout.dialog_layout, container);
+        FrameLayout rootDialog = rootView.findViewById(R.id.dialogRoot);
+        view = inflater.inflate(getDialogLayout(), container);
+        rootDialog.addView(view);
         getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(getBackgroundColor()));
         getDialog().setCanceledOnTouchOutside(getCanceledOnTouchOutside());
         getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
@@ -58,27 +56,11 @@ public abstract class FragmentationButtomsheet extends BottomSheetDialogFragment
                 if (event.getAction() == KeyEvent.ACTION_UP && keyCode == android.view.KeyEvent.KEYCODE_BACK) {
                     boolean shouldClosed = onBackPressed();
                     if (shouldClosed) {
-                        hiddenState();
+                        close();
                     }
                     return true;
                 }
                 return false;
-
-            }
-        });
-        behavior = BottomSheetBehavior.from(rootBottomsheet);
-        behavior.setPeekHeight(getPeekHeight());
-        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    close();
-                }
-            }
-
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
 
             }
         });
@@ -88,49 +70,42 @@ public abstract class FragmentationButtomsheet extends BottomSheetDialogFragment
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        onBottomsheetListener = getOnBottomsheetListener();
-        if (onBottomsheetListener != null){
-            onBottomsheetListener.onBottomsheetCreated();
+        onDialogListener = getOnDialogListener();
+        if (onDialogListener != null){
+            onDialogListener.onDialogOpen();
         }
         onLayoutCreated(view);
     }
 
-    public abstract OnBottomsheetListener getOnBottomsheetListener();
-
-    @StyleRes
-    public abstract int getStyle();
-
-    public abstract boolean getCanceledOnTouchOutside();
-
-    @ColorInt
-    public abstract int getBackgroundColor();
-
-    public abstract int getPeekHeight();
-
-    @LayoutRes
-    public abstract int getBottomsheetLayout();
-
-    public abstract void onLayoutCreated(View rootView);
+    /*@NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        return new Dialog(getActivity(), getTheme()) {
+            @Override
+            public void onBackPressed() {
+                try {
+                    getDialog().dismiss();
+                    MemberDialogFragment.super.onDismiss(getDialog());
+                } catch (Exception e) {
+                }
+            }
+        };
+    }*/
 
     public void close() {
         try {
-            getDialog().dismiss();
-            FragmentationButtomsheet.super.onDismiss(getDialog());
-            if (onBottomsheetListener != null){
-                onBottomsheetListener.onBottomsheetClose();
+            if (getDialog() != null) {
+                getDialog().dismiss();
+                FragmentationDialogFragment.super.onDismiss(getDialog());
+                if (onDialogListener != null) {
+                    onDialogListener.onDialogClose();
+                }
             }
         } catch (Exception e) {
         }
     }
 
-    private void hiddenState() {
-        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-    }
-
-    public void open() {
-        if (behavior == null){
-            throw new FragmentationException(FragmentationException.DO_NOT_USE_ON_CREATE_VIEW);
-        }
+    /*public void open() {
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -140,7 +115,7 @@ public abstract class FragmentationButtomsheet extends BottomSheetDialogFragment
                 }
             }
         }, 500);
-    }
+    }*/
 
     @Override
     public void onStart() {
@@ -151,8 +126,24 @@ public abstract class FragmentationButtomsheet extends BottomSheetDialogFragment
         }
     }
 
+    public abstract OnDialogListener getOnDialogListener();
+
+    @StyleRes
+    public abstract int getStyle();
+
+    public abstract boolean getCanceledOnTouchOutside();
+
+    @ColorInt
+    public abstract int getBackgroundColor();
+
+    @LayoutRes
+    public abstract int getDialogLayout();
+
+    public abstract void onLayoutCreated(View rootView);
+
     @Override
     public boolean onBackPressed() {
         return true;
     }
+
 }

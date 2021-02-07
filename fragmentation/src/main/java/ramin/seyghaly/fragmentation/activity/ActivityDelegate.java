@@ -1,6 +1,8 @@
-package ramin.seyghaly.fragmentation;
+package ramin.seyghaly.fragmentation.activity;
 
 import androidx.annotation.IdRes;
+
+import ramin.seyghaly.fragmentation.fragment.BaseFragment;
 
 public interface ActivityDelegate {
 

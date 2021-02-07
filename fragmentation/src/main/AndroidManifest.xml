@@ -3,7 +3,7 @@
     package="ramin.seyghaly.fragmentation">
 
     <application>
-        <activity android:name=".BaseActivity"></activity>
+        <activity android:name=".activity.BaseActivity"></activity>
     </application>
 
 </manifest>
